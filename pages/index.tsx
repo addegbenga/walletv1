@@ -1,72 +1,197 @@
-import type { NextPage } from 'next'
-import Head from 'next/head'
-import Image from 'next/image'
-import styles from '../styles/Home.module.css'
-
+/* eslint-disable node/no-unpublished-import */
+/* eslint-disable no-undef */
+import { NextPage } from "next";
+import { useState, useEffect } from "react";
+import WalletConnect from "@walletconnect/client";
+import QRCodeModal from "@walletconnect/qrcode-modal";
+import Greeter from "../artifacts/contracts/Greeter.sol/Greeter.json";
+import { ethers } from "ethers";
+const greeterAddress = "0x60C3c0221e8a5991266022E4903D8a7A1d01d150";
 const Home: NextPage = () => {
+  // store greeting in local state
+  const [greeting, setGreetingValue] = useState<string>();
+  const [walletAddress, setWalletAddress] = useState<object | string | any>();
+  useEffect(() => {
+    const tests = async () => {
+      if (typeof (window as any).ethereum !== "undefined") {
+        const provider = new ethers.providers.Web3Provider(
+          (window as any).ethereum
+        );
+        const accounts = await provider.listAccounts();
+        if ((accounts as any) > 1) {
+          const wallet = JSON.parse(localStorage.getItem("addrr"));
+          setWalletAddress(wallet && wallet);
+        } else {
+          localStorage.removeItem("addrr");
+        }
+      }
+    };
+    tests();
+  }, []);
+
+  useEffect(() => {
+    if (typeof (window as any).ethereum !== "undefined") {
+      (window as any).ethereum.on("accountsChanged", async function (accounts) {
+        // Time to reload your interface with accounts[0]!
+        try {
+          const provider = new ethers.providers.Web3Provider(
+            (window as any).ethereum
+          );
+          const signer = provider.getSigner();
+          const signedAddress = await signer.getAddress();
+          const network = await provider.getNetwork();
+          const balance = await provider.getBalance(signedAddress);
+          const convertedBalance = ethers.utils.formatEther(balance);
+          localStorage.setItem(
+            "addrr",
+            JSON.stringify({
+              signedAddress: signedAddress,
+              connected: true,
+              balance: convertedBalance,
+              network: network.name,
+            })
+          );
+          const localss = JSON.parse(localStorage.getItem("addrr"));
+          setWalletAddress(localss && localss);
+        } catch (error) {
+          localStorage.removeItem("addrr");
+          setWalletAddress("");
+        }
+      });
+    }
+  }, []);
+
+  const requestAccount = async () => {
+    try {
+      if (typeof (window as any).ethereum !== "undefined") {
+        let localss: any;
+        await (window as any).ethereum.request({
+          method: "eth_requestAccounts",
+        });
+        const provider = new ethers.providers.Web3Provider(
+          (window as any).ethereum
+        );
+        const signer = provider.getSigner();
+        const signedAddress = await signer.getAddress();
+        const balance = await provider.getBalance(signedAddress);
+        const network = await provider.getNetwork();
+        const convertedBalance = ethers.utils.formatEther(balance);
+        localss = localStorage.setItem(
+          "addrr",
+          JSON.stringify({
+            signedAddress: signedAddress,
+            connected: true,
+            balance: convertedBalance,
+            network: network.name,
+          })
+        );
+        localss = JSON.parse(localStorage.getItem("addrr"));
+        setWalletAddress(localss && localss);
+      } else {
+        alert("Please your metamask wallet");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const fetchGreeting = async () => {
+    if (typeof (window as any).ethereum !== "undefined") {
+      const provider = new ethers.providers.Web3Provider(
+        (window as any).ethereum
+      );
+      const contract = new ethers.Contract(
+        greeterAddress,
+        Greeter.abi,
+        provider
+      );
+      try {
+        const data = await contract.greet();
+        console.log("data", data);
+      } catch (error) {
+        console.log(error);
+      }
+    } else {
+      alert("please connect your wallet");
+    }
+  };
+  async function setGreeting() {
+    if (!greeting) return;
+    if (typeof (window as any).ethereum !== "undefined") {
+      await requestAccount();
+      const provider = new ethers.providers.Web3Provider(
+        (window as any).ethereum
+      );
+      const signer = provider.getSigner();
+      const contract = new ethers.Contract(greeterAddress, Greeter.abi, signer);
+      const transaction = await contract.setGreeting(greeting);
+      await transaction.wait();
+      fetchGreeting();
+    } else {
+      alert("please connect your wallet");
+    }
+  }
   return (
-    <div className={styles.container}>
-      <Head>
-        <title>Create Next App</title>
-        <meta name="description" content="Generated by create next app" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
-      <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
+    <div className="max-w-lg bg-white mx-auto border h-96 mt-10">
+      <div className="px-5 ">
+        <h1 className="text-center py-3 border-b mt-3   text-2xl">
+          My Metamask Connect wallet
         </h1>
+        <div className="my-4">
+          <p>
+            My address:{" "}
+            {walletAddress
+              ? walletAddress.signedAddress
+              : "connect wallet to see your address"}
+          </p>
+          <p>
+            My balance :{" "}
+            {walletAddress && walletAddress ? walletAddress.balance : null}
+          </p>
+          <p>
+            My Network:{" "}
+            {walletAddress && walletAddress ? walletAddress.network : null}
+          </p>
 
-        <p className={styles.description}>
-          Get started by editing{' '}
-          <code className={styles.code}>pages/index.tsx</code>
-        </p>
+          <div className="flex gap-3">
+            {walletAddress && walletAddress.connected ? (
+              <button
+                onClick={() => requestAccount()}
+                className="bg-black my-2 p-2 px-4 rounded  text-white"
+              >
+                Disconnect wallet
+              </button>
+            ) : (
+              <button
+                onClick={() => requestAccount()}
+                className="bg-black my-2 p-2 px-4 rounded  text-white"
+              >
+                connect metamask
+              </button>
+            )}
 
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h2>Documentation &rarr;</h2>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
+            <button
+              onClick={fetchGreeting}
+              className="bg-black my-2 p-2 px-4 rounded  text-white"
+            >
+              Fetch data
+            </button>
+          </div>
 
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h2>Learn &rarr;</h2>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/canary/examples"
-            className={styles.card}
-          >
-            <h2>Examples &rarr;</h2>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h2>Deploy &rarr;</h2>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
+          <div className="flex p-3">
+            <button className="bg-black p-2  text-white" onClick={setGreeting}>
+              Set Greeting
+            </button>
+            <input
+              className="border p-2 "
+              onChange={(e) => setGreetingValue(e.target.value)}
+              placeholder="Set greeting"
+            />
+          </div>
         </div>
-      </main>
-
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <span className={styles.logo}>
-            <Image src="/vercel.svg" alt="Vercel Logo" width={72} height={16} />
-          </span>
-        </a>
-      </footer>
+      </div>
     </div>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;
