@@ -27,45 +27,49 @@ const Home: NextPage = () => {
     tests();
   }, []);
 
-  useEffect(() => {
-    const checkChaniIdChange = () => {
-      if (typeof (window as any).ethereum !== "undefined") {
-        (window as any).ethereum.on("chainChanged", async (chainId) => {
-          // Handle the new chain.
-          // Correctly handling chain changes can be complicated.
-          // We recommend reloading the page unless you have good reason not to.
+  const handleChainIdChange = async () => {
+    // Handle the new chain.
+    // Correctly handling chain changes can be complicated.
+    // We recommend reloading the page unless you have good reason not to.
 
-          if (typeof (window as any).ethereum !== "undefined") {
-            try {
-              const provider = new ethers.providers.Web3Provider(
-                (window as any).ethereum
-              );
-              const signer = provider.getSigner();
-              const signedAddress = await signer.getAddress();
-              const network = await provider.getNetwork();
-              const balance = await provider.getBalance(signedAddress);
-              const convertedBalance = ethers.utils.formatEther(balance);
-              localStorage.setItem(
-                "addrr",
-                JSON.stringify({
-                  signedAddress: signedAddress,
-                  connected: true,
-                  balance: convertedBalance,
-                  network: network.name,
-                })
-              );
-              const localss = JSON.parse(localStorage.getItem("addrr"));
-              setWalletAddress(localss && localss);
-            } catch (error) {
-              localStorage.removeItem("addrr");
-              setWalletAddress("");
-            }
-          }
-          // window.location.reload();
-        });
+    if (typeof (window as any).ethereum !== "undefined") {
+      try {
+        const provider = new ethers.providers.Web3Provider(
+          (window as any).ethereum
+        );
+        const signer = provider.getSigner();
+        const signedAddress = await signer.getAddress();
+        const network = await provider.getNetwork();
+        const balance = await provider.getBalance(signedAddress);
+        const convertedBalance = ethers.utils.formatEther(balance);
+        localStorage.setItem(
+          "addrr",
+          JSON.stringify({
+            signedAddress: signedAddress,
+            connected: true,
+            balance: convertedBalance,
+            network: network.name,
+          })
+        );
+        const localss = JSON.parse(localStorage.getItem("addrr"));
+        setWalletAddress(localss && localss);
+      } catch (error) {
+        localStorage.removeItem("addrr");
+        setWalletAddress("");
       }
+    }
+    // window.location.reload();
+  };
+
+  useEffect(() => {
+    (window as any).ethereum.on("chainChanged", handleChainIdChange);
+
+    return () => {
+      (window as any).ethereum.removeListener(
+        "chainChanged",
+        handleChainIdChange
+      );
     };
-    checkChaniIdChange();
   }, []);
 
   const handleAccountChange = async () => {
@@ -229,7 +233,7 @@ const Home: NextPage = () => {
             </button>
           </div>
 
-          <div className="flex p-3">
+          <div className="flex py-3">
             <button className="bg-black p-2  text-white" onClick={setGreeting}>
               Set Greeting
             </button>
@@ -238,6 +242,10 @@ const Home: NextPage = () => {
               onChange={(e) => setGreetingValue(e.target.value)}
               placeholder="Set greeting"
             />
+          </div>
+
+          <div>
+            <p>Deployed contracts</p>
           </div>
         </div>
       </div>
