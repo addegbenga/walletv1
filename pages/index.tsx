@@ -10,8 +10,9 @@ const Home: NextPage = () => {
   const [greeting, setGreetingValue] = useState<string>();
   const [walletAddress, setWalletAddress] = useState<object | string | any>();
   useEffect(() => {
+    if (typeof (window as any).ethereum !== "undefined") {
     const tests = async () => {
-      if (typeof (window as any).ethereum !== "undefined") {
+    
         const provider = new ethers.providers.Web3Provider(
           (window as any).ethereum
         );
@@ -23,16 +24,14 @@ const Home: NextPage = () => {
           localStorage.removeItem("addrr");
         }
       }
-    };
     tests();
+    }
   }, []);
 
   const handleChainIdChange = async () => {
     // Handle the new chain.
     // Correctly handling chain changes can be complicated.
     // We recommend reloading the page unless you have good reason not to.
-
-    if (typeof (window as any).ethereum !== "undefined") {
       try {
         const provider = new ethers.providers.Web3Provider(
           (window as any).ethereum
@@ -57,11 +56,12 @@ const Home: NextPage = () => {
         localStorage.removeItem("addrr");
         setWalletAddress("");
       }
-    }
+    
     // window.location.reload();
   };
 
   useEffect(() => {
+    if (typeof (window as any).ethereum !== "undefined") {
     (window as any).ethereum.on("chainChanged", handleChainIdChange);
 
     return () => {
@@ -70,10 +70,10 @@ const Home: NextPage = () => {
         handleChainIdChange
       );
     };
+  }
   }, []);
 
   const handleAccountChange = async () => {
-    if (typeof (window as any).ethereum !== "undefined") {
       try {
         const provider = new ethers.providers.Web3Provider(
           (window as any).ethereum
@@ -98,9 +98,10 @@ const Home: NextPage = () => {
         localStorage.removeItem("addrr");
         setWalletAddress("");
       }
-    }
+    
   };
   useEffect(() => {
+    if (typeof (window as any).ethereum !== "undefined") {
     (window as any).ethereum.on("accountsChanged", handleAccountChange);
 
     return () => {
@@ -109,6 +110,7 @@ const Home: NextPage = () => {
         handleAccountChange
       );
     };
+  }
   }, []);
 
   const requestAccount = async () => {
