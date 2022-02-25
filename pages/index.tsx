@@ -2,8 +2,6 @@
 /* eslint-disable no-undef */
 import { NextPage } from "next";
 import { useState, useEffect } from "react";
-import WalletConnect from "@walletconnect/client";
-import QRCodeModal from "@walletconnect/qrcode-modal";
 import Greeter from "../artifacts/contracts/Greeter.sol/Greeter.json";
 import { ethers } from "ethers";
 const greeterAddress = "0x60C3c0221e8a5991266022E4903D8a7A1d01d150";
@@ -30,35 +28,83 @@ const Home: NextPage = () => {
   }, []);
 
   useEffect(() => {
+    const checkChaniIdChange = () => {
+      if (typeof (window as any).ethereum !== "undefined") {
+        (window as any).ethereum.on("chainChanged", async (chainId) => {
+          // Handle the new chain.
+          // Correctly handling chain changes can be complicated.
+          // We recommend reloading the page unless you have good reason not to.
+
+          if (typeof (window as any).ethereum !== "undefined") {
+            try {
+              const provider = new ethers.providers.Web3Provider(
+                (window as any).ethereum
+              );
+              const signer = provider.getSigner();
+              const signedAddress = await signer.getAddress();
+              const network = await provider.getNetwork();
+              const balance = await provider.getBalance(signedAddress);
+              const convertedBalance = ethers.utils.formatEther(balance);
+              localStorage.setItem(
+                "addrr",
+                JSON.stringify({
+                  signedAddress: signedAddress,
+                  connected: true,
+                  balance: convertedBalance,
+                  network: network.name,
+                })
+              );
+              const localss = JSON.parse(localStorage.getItem("addrr"));
+              setWalletAddress(localss && localss);
+            } catch (error) {
+              localStorage.removeItem("addrr");
+              setWalletAddress("");
+            }
+          }
+          // window.location.reload();
+        });
+      }
+    };
+    checkChaniIdChange();
+  }, []);
+
+  const handleAccountChange = async () => {
     if (typeof (window as any).ethereum !== "undefined") {
-      (window as any).ethereum.on("accountsChanged", async function (accounts) {
-        // Time to reload your interface with accounts[0]!
-        try {
-          const provider = new ethers.providers.Web3Provider(
-            (window as any).ethereum
-          );
-          const signer = provider.getSigner();
-          const signedAddress = await signer.getAddress();
-          const network = await provider.getNetwork();
-          const balance = await provider.getBalance(signedAddress);
-          const convertedBalance = ethers.utils.formatEther(balance);
-          localStorage.setItem(
-            "addrr",
-            JSON.stringify({
-              signedAddress: signedAddress,
-              connected: true,
-              balance: convertedBalance,
-              network: network.name,
-            })
-          );
-          const localss = JSON.parse(localStorage.getItem("addrr"));
-          setWalletAddress(localss && localss);
-        } catch (error) {
-          localStorage.removeItem("addrr");
-          setWalletAddress("");
-        }
-      });
+      try {
+        const provider = new ethers.providers.Web3Provider(
+          (window as any).ethereum
+        );
+        const signer = provider.getSigner();
+        const signedAddress = await signer.getAddress();
+        const network = await provider.getNetwork();
+        const balance = await provider.getBalance(signedAddress);
+        const convertedBalance = ethers.utils.formatEther(balance);
+        localStorage.setItem(
+          "addrr",
+          JSON.stringify({
+            signedAddress: signedAddress,
+            connected: true,
+            balance: convertedBalance,
+            network: network.name,
+          })
+        );
+        const localss = JSON.parse(localStorage.getItem("addrr"));
+        setWalletAddress(localss && localss);
+      } catch (error) {
+        localStorage.removeItem("addrr");
+        setWalletAddress("");
+      }
     }
+  };
+  useEffect(() => {
+    (window as any).ethereum.on("accountsChanged", handleAccountChange);
+
+    return () => {
+      (window as any).ethereum.removeListener(
+        "accountsChanged",
+        handleAccountChange
+      );
+    };
   }, []);
 
   const requestAccount = async () => {
@@ -131,6 +177,11 @@ const Home: NextPage = () => {
       alert("please connect your wallet");
     }
   }
+
+  const disconnectWallet = () => {
+    localStorage.removeItem("addrr");
+    setWalletAddress("");
+  };
   return (
     <div className="max-w-lg bg-white mx-auto border h-96 mt-10">
       <div className="px-5 ">
@@ -156,7 +207,7 @@ const Home: NextPage = () => {
           <div className="flex gap-3">
             {walletAddress && walletAddress.connected ? (
               <button
-                onClick={() => requestAccount()}
+                onClick={() => disconnectWallet()}
                 className="bg-black my-2 p-2 px-4 rounded  text-white"
               >
                 Disconnect wallet
