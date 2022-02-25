@@ -1,4 +1,16 @@
-# Advanced Sample Hardhat Project
+# Simple Metamask Connect Application
+
+ <h1>Core Functionalities</h1>
+<ul>
+  <li>Allows users to connect their metamask</li>
+  <li>Reads users balance, address and the network their connected to</li>
+  <li>The users wallet data is persisted on page refresh using localstorage</li>
+  <li>Allow users to write to the blockchain and then read from the block chain</li>
+</ul>
+
+
+
+# This project was bootstrapped with advanced Sample Hardhat Project Biolerplate
 
 This project demonstrates an advanced Hardhat use case, integrating other tools commonly used alongside Hardhat in the ecosystem.
 
