@@ -1,12 +1,24 @@
 # Simple Metamask Connect Application
 
- <h1>Core Functionalities</h1>
+ <h2>Core Functionalities</h2>
 <ul>
   <li>Allows users to connect their metamask</li>
   <li>Reads users balance, address and the network their connected to</li>
   <li>The users wallet data is persisted on page refresh using localstorage</li>
   <li>Allow users to write to the blockchain and then read from the block chain</li>
 </ul>
+
+<h2>Future functionalitieis</h2>
+
+<ul>
+  <li>integrating wallet connect on mobile</li>
+  <li>Allowing users to transfer and receive token on their wallet</li>
+  <li>The users wallet data is persisted on page refresh using localstorage</li>
+</ul>
+
+
+
+
 
 
 
